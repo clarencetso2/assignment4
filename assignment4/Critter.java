@@ -25,7 +25,11 @@ public abstract class Critter {
 	private static String myPackage;
 	private	static List<Critter> population = new java.util.ArrayList<Critter>();
 	private static List<Critter> babies = new java.util.ArrayList<Critter>();
-
+	private static Critter[][] critterGrid = new Critter [Params.world_height][Params.world_width];
+	protected boolean moved = false; //checks if critter has already moved in timeStep
+	protected boolean timeStep = false; // checks whether walk/run is called in timeStep or fight (false if in timeStep)
+	
+	
 	// Gets the package name.  This assumes that Critter and its subclasses are all in the same package.
 	static {
 		myPackage = Critter.class.getPackage().toString().split(" ")[1];
@@ -50,14 +54,146 @@ public abstract class Critter {
 	private int x_coord;
 	private int y_coord;
 	
+	/**
+	 * If called in doTimeStep() in Critter: Critter moves a space in a direction
+	 * If called in fight() in Critter: attempts to move Critter a space in specified direction(if space open)
+	 * @param direction critter will move (8 directions)
+	 */
 	protected final void walk(int direction) {
-	}
-	
-	protected final void run(int direction) {
+		//if it hasnt moved and is doing timeStep
+		if(moved == false && timeStep == false){
+			executeMove(1,direction);
+			moved = true;
+		}
+		//if in fight and hasnt moved
+		else if(moved == false){
+			if(unOccupied(1,direction)){
+				executeMove(1,direction);
+				moved = true;
+			}
+			
+		}
+		energy-=Params.walk_energy_cost;
+
 		
 	}
 	
+	
+	/**
+	 * If called in doTimeStep() in Critter: Critter moves a space in a direction
+	 * If called in fight() in Critter: attempts to move Critter a space in specified direction(if space open)
+	 * @param direction critter will move (8 directions)
+	 */
+	protected final void run(int direction) {
+		//if it hasnt moved and is doing timeStep
+				if(moved == false && timeStep == false){
+					executeMove(2,direction);
+					moved = true;
+				}
+				//if in fight and hasnt moved
+				else if(moved == false){
+					if(unOccupied(2,direction)){
+						executeMove(2,direction);
+						moved = true;
+					}
+					
+				}
+				energy-=Params.run_energy_cost;
+	}
+	
+	
+	
+	
+	/**
+	 * checks if critter can move into empty spot
+	 * @param numSteps Number of steps to take in direction
+	 * @param direction of movement
+	 * @return True if the spot not occupied
+	 */
+	protected boolean unOccupied(int numSteps,int direction){
+		int xTemp= x_coord;
+		int yTemp= y_coord;
+		if(direction==0 || direction==1 || direction==7){  // right directions
+			xTemp += numSteps;
+		}
+		if(direction == 1 || direction == 2 || direction == 3){	// up directions
+		
+			yTemp += numSteps;
+		}
+		
+		if(direction== 3 || direction== 4 || direction== 5){  // left directions
+			xTemp -= numSteps;
+		}
+		
+		if(direction == 5 || direction == 6 || direction == 7){	// down directions
+			
+			yTemp -= numSteps;
+		}
+		
+		if(xTemp<0){  					//check for overflow
+			xTemp+=Params.world_width;
+		}
+		if(yTemp<0){
+			yTemp+=Params.world_height;	//check for overflow
+		}
+		x_coord=x_coord%Params.world_width;	// keeps critter on the board 
+		y_coord=y_coord%Params.world_height;
+		
+		if(occupied(xTemp,yTemp) == false){
+			return true;
+		}
+		else 
+			return false;
+	}
+	
+	
+	/**
+	 * Moves critter numsteps in a direction and wraps if needed
+	 * @param numSteps The number of steps to move the Critter.
+	 * @param direction The direction to move the Critter.
+	 */
+	protected final void executeMove(int numSteps, int direction){
+		if(direction==0 || direction==1 || direction==7){  // right directions
+			x_coord += numSteps;
+		}
+		if(direction == 1 || direction == 2 || direction == 3){	// up directions
+		
+			y_coord += numSteps;
+		}
+		
+		if(direction== 3 || direction== 4 || direction== 5){  // left directions
+			x_coord -= numSteps;
+		}
+		
+		if(direction == 5 || direction == 6 || direction == 7){	// down directions
+			
+			y_coord -= numSteps;
+		}
+		
+		if(x_coord<0){  					//check for neg and places onto board
+			x_coord+=Params.world_width;
+		}
+		if(y_coord<0){
+			y_coord+=Params.world_height;	//check for neg
+		}
+		x_coord=x_coord%Params.world_width;	// keeps critter on the board 
+		y_coord=y_coord%Params.world_height;
+	}
+	
+	
 	protected final void reproduce(Critter offspring, int direction) {
+		if(this.energy < Params.min_reproduce_energy){
+			return;
+		}
+		else{
+			offspring.x_coord = this.x_coord;
+			offspring.y_coord = this.y_coord;
+			offspring.executeMove(1, direction);
+			offspring.moved = false;
+			offspring.energy = this.energy/2;
+			this.energy = (int) Math.ceil(((double) (this.energy))/2);
+			babies.add(offspring);
+		}
 	}
 
 	public abstract void doTimeStep();
@@ -168,14 +304,196 @@ public abstract class Critter {
 	 * Clear the world of all critters, dead and alive
 	 */
 	public static void clearWorld() {
-		// Complete this method.
+		population.clear();
+		babies.clear();
+		critterGrid=new Critter[Params.world_height][Params.world_width];
 	}
 	
 	public static void worldTimeStep() {
-		// Complete this method.
+		// Do timestep for all critters
+		doTimeStepAllCritters();
+		
+		//resolve encounter
+		resolveEncounters();
+		
+		//Invoke rest energy cost on all critters
+		updateEnergy();
+		
+		//remove dead critters (energy < 0)
+		removeDead();
+		
+		//add new baby critters
+		addCritters();
+		
+		
+		
+		
+		
+		
+		
 	}
 	
 	public static void displayWorld() {
 		// Complete this method.
 	}
+	
+	
+	/**
+	 * Update energy of each Critter and populates a 2d grid array
+	 */
+	private static void updateEnergy(){
+			//Update rest energy and grid
+		for(Critter c:population){
+			c.energy=c.getEnergy()-Params.rest_energy_cost; // make sure to do b4 dead
+		}
+	}
+	
+	
+	
+	/*
+	 * adds new critters into population array
+	 */
+	public static void addCritters(){
+		for(int i = 0; i < babies.size(); i++){
+			population.add(babies.get(i));
+		}
+	}
+	
+	/**
+	 * Remove dead critters from population
+	 */
+	private static void removeDead(){
+		//Remove dead critters from populaiton list
+		for(int i = 0; i < population.size(); i++){
+			if(population.get(i).energy <= 0){
+				population.remove(i);
+				i--;   //shifts back everything in list
+			}   
+		}
+		
+		
+	}
+	
+	/**
+	 * Executes the doTimeStep() function for each Critter
+	 */
+	private static void doTimeStepAllCritters(){
+		//Do time step for each critter
+		for(Critter c:population){
+			c.moved=false; 
+			c.timeStep=true; 
+			c.doTimeStep();
+			c.timeStep=false; 
+		}
+	}
+	
+	
+	/**
+	 * Resolves encounters between critters
+	 */
+	private static void resolveEncounters(){
+		int diceA, diceB;
+		Critter temp1, temp2;
+		boolean fightAB, fightBA;
+		
+		//check for encounters on all critters in population
+		for (int i = 0; i < population.size(); i++){
+			temp1=population.get(i);
+			temp1.timeStep=false;
+			for(int j = i + 1; j < population.size(); j++){
+				temp2=population.get(j);
+				temp2.timeStep=false;
+				
+				//If temp1 energy about to die, cant fight
+				if(temp1.energy<=0){
+					break;
+				}
+				//If temp2 about to die, temp1 doesnt need to fight
+				if(temp2.energy<=0){
+					continue;
+				}
+				//if not at same location, cant fight
+				if(sameLocation(temp1,temp2) == false){
+					continue;
+				}
+				
+				//check if want to fight
+				fightAB=temp1.fight(temp2.toString());
+				fightBA=temp2.fight(temp1.toString());
+				diceA = 0; diceB = 0;
+				
+				//check if at same location and both alive
+				if(temp1.getEnergy() > 0 && temp2.getEnergy() > 0 && sameLocation(temp1, temp2) == true){
+					if(fightAB){
+						diceA = getRandomInt(temp1.getEnergy());
+					}
+					if(fightBA)
+					{
+						diceB = getRandomInt(temp2.getEnergy());
+					}
+					
+					if(diceA >= diceB){
+						temp1.energy= temp1.getEnergy() + temp2.getEnergy()/2;
+						temp2.energy=0;
+					}else{
+						temp2.energy= temp2.getEnergy() + temp1.getEnergy()/2;
+						temp1.energy=0;
+					}				}
+			}
+		
+		}
+	}
+	
+	
+	
+	
+	/**
+	 * Checks if the critters are in the same location 
+	 * @param a First Critter
+	 * @param b Second Critter
+	 * @return True if both critters are in the same location, false otherwise
+	 */
+	private static boolean sameLocation(Critter a,Critter b){
+		if(a.x_coord==b.x_coord && b.y_coord==a.y_coord){
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Checks if the current critter's location is occupied
+	 * @param a Critter
+	 * @return True if the space the critter is in is occupied
+	 */
+	public static boolean occupied(Critter a){
+		for(Critter c:population){
+			if(c.energy>0 && sameLocation(a,c)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Checks if the current x and y coordinate are free
+	 * @param x X coordinate or column to check
+	 * @param y Y coordinate or row to check
+	 * @return True if the (x,y) coordinate is occupied
+	 */
+	private static boolean occupied(int x, int y){
+		for(Critter c:population){
+			if(c.energy>0 && c.x_coord==x && c.y_coord==y){
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	
+	
+	
+	
+	
+		
 }
