@@ -42,6 +42,7 @@ public class Main {
      * and the second is test (for test output, where all output to be directed to a String), or nothing.
      */
     public static void main(String[] args) { 
+    	System.out.println("fuck");
         if (args.length != 0) {
             try {
                 inputFile = args[0];
