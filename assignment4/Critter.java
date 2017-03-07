@@ -313,6 +313,7 @@ public abstract class Critter {
 		// Do timestep for all critters
 		doTimeStepAllCritters();
 		
+		
 		//resolve encounter
 		resolveEncounters();
 		
@@ -321,6 +322,9 @@ public abstract class Critter {
 		
 		//remove dead critters (energy < 0)
 		removeDead();
+		
+		// Add algae
+		makeAlgae();
 		
 		//add new baby critters
 		addCritters();
@@ -347,7 +351,19 @@ public abstract class Critter {
 			c.energy=c.getEnergy()-Params.rest_energy_cost; // make sure to do b4 dead
 		}
 	}
-	
+	/*
+	 * Generates algae and adds them to population
+	 */
+	private static void makeAlgae(){
+		Critter algae = new Algae();
+		for(int i = 0; i < Params.refresh_algae_count; i++){
+			algae.energy = Params.start_energy;
+			algae.x_coord = getRandomInt(Params.world_width);
+			algae.y_coord = getRandomInt(Params.world_height);
+			population.add(algae);
+
+		}
+	}
 	
 	
 	/*
