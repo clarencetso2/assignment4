@@ -13,6 +13,8 @@ package assignment4;
  */
 
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 /* see the PDF for descriptions of the methods and fields in this class
@@ -130,11 +132,11 @@ public abstract class Critter {
 			yTemp -= numSteps;
 		}
 		
-		if(xTemp<0){  					//check for overflow
+		if(xTemp<0){  					//keep neg numbers on board
 			xTemp+=Params.world_width;
 		}
 		if(yTemp<0){
-			yTemp+=Params.world_height;	//check for overflow
+			yTemp+=Params.world_height;	//keep neg numbers on board
 		}
 		x_coord=x_coord%Params.world_width;	// keeps critter on the board 
 		y_coord=y_coord%Params.world_height;
@@ -182,9 +184,11 @@ public abstract class Critter {
 	
 	
 	protected final void reproduce(Critter offspring, int direction) {
+		//not enough energy to reproduce
 		if(this.energy < Params.min_reproduce_energy){
 			return;
 		}
+		
 		else{
 			offspring.x_coord = this.x_coord;
 			offspring.y_coord = this.y_coord;
@@ -210,6 +214,53 @@ public abstract class Critter {
 	 * @throws InvalidCritterException
 	 */
 	public static void makeCritter(String critter_class_name) throws InvalidCritterException {
+		
+		Class<?> myCritter = null;
+		Constructor<?> constructor = null;
+		Object instanceOfMyCritter = null;
+
+		try {
+			myCritter = Class.forName(critter_class_name); 	// Class object of specified name
+		} catch (ClassNotFoundException e) {
+			throw new InvalidCritterException(critter_class_name);
+		}
+		
+		
+		
+		try {
+			constructor = myCritter.getConstructor();		// No-parameter constructor object
+			instanceOfMyCritter = constructor.newInstance();	// Create new object using constructor
+		} catch ( InstantiationException e) {
+			// Do whatever is needed to handle the various exceptions here -- e.g. rethrow Exception
+			throw new InvalidCritterException(critter_class_name);
+		} catch (NoSuchMethodException e) {
+			// TODO Auto-generated catch block
+			throw new InvalidCritterException(critter_class_name);
+
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			throw new InvalidCritterException(critter_class_name);
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			throw new InvalidCritterException(critter_class_name);
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			throw new InvalidCritterException(critter_class_name);
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			throw new InvalidCritterException(critter_class_name);
+		}
+		
+		
+		
+		
+		
+		Critter me = (Critter)instanceOfMyCritter;		// Cast to Critter
+		me.energy = Params.start_energy;
+		me.x_coord = getRandomInt(Params.world_width);
+		me.y_coord= getRandomInt(Params.world_height);
+		
+		population.add(me);
 	}
 	
 	/**
@@ -317,7 +368,7 @@ public abstract class Critter {
 		//resolve encounter
 		resolveEncounters();
 		
-		//Invoke rest energy cost on all critters
+		//update energy after rest
 		updateEnergy();
 		
 		//remove dead critters (energy < 0)
@@ -328,10 +379,6 @@ public abstract class Critter {
 		
 		//add new baby critters
 		addCritters();
-		
-		
-		
-		
 		
 		
 		
@@ -348,15 +395,15 @@ public abstract class Critter {
 	private static void updateEnergy(){
 			//Update rest energy and grid
 		for(Critter c:population){
-			c.energy=c.getEnergy()-Params.rest_energy_cost; // make sure to do b4 dead
+			c.energy=c.energy-Params.rest_energy_cost; // make sure to do b4 dead
 		}
 	}
 	/*
 	 * Generates algae and adds them to population
 	 */
 	private static void makeAlgae(){
-		Critter algae = new Algae();
 		for(int i = 0; i < Params.refresh_algae_count; i++){
+			Critter algae = new Algae();
 			algae.energy = Params.start_energy;
 			algae.x_coord = getRandomInt(Params.world_width);
 			algae.y_coord = getRandomInt(Params.world_height);
@@ -383,11 +430,11 @@ public abstract class Critter {
 		for(int i = 0; i < population.size(); i++){
 			if(population.get(i).energy <= 0){
 				population.remove(i);
-				i--;   //shifts back everything in list
+				i--;   //shifts back everything in list so i
 			}   
 		}
 		
-		
+
 	}
 	
 	/**
@@ -415,21 +462,26 @@ public abstract class Critter {
 		//check for encounters on all critters in population
 		for (int i = 0; i < population.size(); i++){
 			temp1=population.get(i);
-			temp1.timeStep=false;
+			temp1.timeStep = false;
+			
+			
 			for(int j = i + 1; j < population.size(); j++){
-				temp2=population.get(j);
-				temp2.timeStep=false;
 				
-				//If temp1 energy about to die, cant fight
-				if(temp1.energy<=0){
-					break;
-				}
-				//If temp2 about to die, temp1 doesnt need to fight
-				if(temp2.energy<=0){
-					continue;
-				}
+				temp2 = population.get(j);
+				temp2.timeStep = false;
+				
+	
 				//if not at same location, cant fight
 				if(sameLocation(temp1,temp2) == false){
+					continue;
+				}
+				
+				//If temp1 energy about to die, it cant fight
+				if(temp1.energy <= 0){
+					break;
+				}
+				//If temp2 about to die, temp1 doesnt need to fight it
+				if(temp2.energy <= 0){
 					continue;
 				}
 				
@@ -440,21 +492,27 @@ public abstract class Critter {
 				
 				//check if at same location and both alive
 				if(temp1.getEnergy() > 0 && temp2.getEnergy() > 0 && sameLocation(temp1, temp2) == true){
+					
 					if(fightAB){
 						diceA = getRandomInt(temp1.getEnergy());
 					}
+					
 					if(fightBA)
 					{
 						diceB = getRandomInt(temp2.getEnergy());
 					}
 					
+					
 					if(diceA >= diceB){
-						temp1.energy= temp1.getEnergy() + temp2.getEnergy()/2;
-						temp2.energy=0;
-					}else{
-						temp2.energy= temp2.getEnergy() + temp1.getEnergy()/2;
-						temp1.energy=0;
-					}				}
+						temp1.energy = temp1.energy + temp2.energy/2;
+						temp2.energy = 0;
+					}
+					
+					else{
+						temp2.energy = temp2.energy + temp1.energy/2;
+						temp1.energy = 0;
+					}				
+				}
 			}
 		
 		}
@@ -464,10 +522,10 @@ public abstract class Critter {
 	
 	
 	/**
-	 * Checks if the critters are in the same location 
-	 * @param a First Critter
-	 * @param b Second Critter
-	 * @return True if both critters are in the same location, false otherwise
+	 * Checks if  critters are in the same location 
+	 * @param a first Critter
+	 * @param b second Critter
+	 * @return True if critters are in  same location
 	 */
 	private static boolean sameLocation(Critter a,Critter b){
 		if(a.x_coord==b.x_coord && b.y_coord==a.y_coord){
