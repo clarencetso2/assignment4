@@ -14,7 +14,7 @@ package assignment4;
 
 import java.util.Scanner;
 import java.io.*;
-
+import java.util.*;
 
 /*
  * Usage: java <pkgname>.Main <input file> test
@@ -42,7 +42,6 @@ public class Main {
      * and the second is test (for test output, where all output to be directed to a String), or nothing.
      */
     public static void main(String[] args) { 
-    	System.out.println("fuck");
         if (args.length != 0) {
             try {
                 inputFile = args[0];
@@ -70,6 +69,114 @@ public class Main {
 
         /* Do not alter the code above for your submission. */
         /* Write your code below. */
+        
+        int inputFlag = 1;
+        String[] commands = {"quit","show","step","seed","make","stats"};
+        while (inputFlag == 1) {
+        	System.out.print("critters>");
+    		String inputLine = kb.nextLine();
+    		StringTokenizer input = new StringTokenizer(inputLine);
+    		
+    		String command = input.nextToken();
+    		int exceptionType = 1;
+    		
+    		for(int i = 0; i < 6; i++) {
+    			if(command.equals(commands[i])) {
+    				exceptionType = 0;
+    				break;
+    			}
+    		}
+    		
+    		if(command.equals("quit") && input.hasMoreTokens() == false) {
+    			inputFlag = 0;
+    		}
+    		
+    		else if(command.equals("show") && input.hasMoreTokens() == false) {
+    			Critter.displayWorld();
+    		}
+    		
+    		else if(command.equals("step") && input.hasMoreTokens() == false) {
+    			Critter.worldTimeStep();
+    		}
+    		
+    		else if(command.equals("step") && input.hasMoreTokens() == true) {
+    			String num = input.nextToken();
+				int number = Integer.parseInt(num);
+    			if(input.hasMoreTokens() == false) {
+    				if(number > 1) {
+	    				for(int i = 0; i < number; i++) {
+	    					Critter.worldTimeStep();
+	    				}
+    				}
+    				else {
+    					exceptionType = 2;
+    				}
+    			}
+    			else {
+    				exceptionType = 2;
+    			}
+    		}
+    		
+    		else if(command.equals("seed") && input.hasMoreTokens() == true) {
+    			String num = input.nextToken();
+				int number = Integer.parseInt(num);
+    			if(input.hasMoreTokens() == false) {
+    				Critter.setSeed(number);
+    			}
+    			else {
+    				
+    			}
+    		}
+    		
+    		else if(command.equals("make") && input.hasMoreTokens() == true) {
+    			String creatureType = input.nextToken();
+    			if(input.hasMoreTokens()) {
+    				String num = input.nextToken();
+    				int number = Integer.parseInt(num);
+    				if(number > 1) {
+	    				for(int i = 0; i < number; i++) {
+	        				try{
+	        					Critter.makeCritter(creatureType);
+	        				}
+	        				catch (InvalidCritterException e) {
+	        					
+	        				}
+	    				}
+    				}
+    				else {
+    					exceptionType = 2;
+    				}
+    			}
+    			else {
+    				try{
+    					Critter.makeCritter(creatureType);
+    				}
+    				catch (InvalidCritterException e) {
+    					
+    				}
+    			}
+    		}
+    		
+    		else if(command.equals("stats") && input.hasMoreTokens() == true) {
+    			String creatureType = input.nextToken();
+    			if(!input.hasMoreTokens()) {
+    				try {
+    					List<Critter> result = Critter.getInstances(creatureType);
+    					Critter.runStats(result);
+    				}
+    				catch (InvalidCritterException e) {
+    					
+    				}
+    			}
+    			else {
+    				exceptionType = 2;
+    			}
+    		}
+    		
+    		else {
+    			exceptionType = 2;
+    		}
+        }
         
         // System.out.println("GLHF");
         
