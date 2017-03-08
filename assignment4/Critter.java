@@ -64,14 +64,14 @@ public abstract class Critter {
 	protected final void walk(int direction) {
 		//if it hasnt moved and is doing timeStep
 		if(moved == false && timeStep == false){
-			executeMove(1,direction);
 			moved = true;
+			executeMove(1,direction);
 		}
 		//if in fight and hasnt moved
 		else if(moved == false){
 			if(unOccupied(1,direction)){
-				executeMove(1,direction);
 				moved = true;
+				executeMove(1,direction);
 			}
 			
 		}
@@ -89,14 +89,15 @@ public abstract class Critter {
 	protected final void run(int direction) {
 		//if it hasnt moved and is doing timeStep
 				if(moved == false && timeStep == false){
-					executeMove(2,direction);
 					moved = true;
+					executeMove(2,direction);
+					
 				}
 				//if in fight and hasnt moved
 				else if(moved == false){
 					if(unOccupied(2,direction)){
-						executeMove(2,direction);
 						moved = true;
+						executeMove(2,direction);
 					}
 					
 				}
@@ -456,12 +457,14 @@ public abstract class Critter {
 	 */
 	private static void resolveEncounters(){
 		int diceA, diceB;
+		
 		Critter temp1, temp2;
+		
 		boolean fightAB, fightBA;
 		
-		//check for encounters on all critters in population
+		//check for encounters on all critters in population ( all combination)
 		for (int i = 0; i < population.size(); i++){
-			temp1=population.get(i);
+			temp1 = population.get(i);
 			temp1.timeStep = false;
 			
 			
@@ -485,20 +488,22 @@ public abstract class Critter {
 					continue;
 				}
 				
-				//check if want to fight
+				
+				//Initiate fight between critters
 				fightAB=temp1.fight(temp2.toString());
 				fightBA=temp2.fight(temp1.toString());
 				diceA = 0; diceB = 0;
 				
-				//check if at same location and both alive
+				//check if at same location and both alive after they called fight
 				if(temp1.getEnergy() > 0 && temp2.getEnergy() > 0 && sameLocation(temp1, temp2) == true){
+					
 					
 					if(fightAB){
 						diceA = getRandomInt(temp1.getEnergy());
 					}
 					
-					if(fightBA)
-					{
+					if(fightBA){
+						
 						diceB = getRandomInt(temp2.getEnergy());
 					}
 					
