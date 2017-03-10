@@ -14,6 +14,8 @@ package assignment4;
 
 import java.util.Scanner;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 /*
@@ -72,8 +74,8 @@ public class Main {
         
         int inputFlag = 1;
         String[] commands = {"quit","show","step","seed","make","stats"};
+        System.out.print("critters>");
         while (inputFlag == 1) {
-        	System.out.print("critters>");
     		String inputLine = kb.nextLine();
     		StringTokenizer input = new StringTokenizer(inputLine);
     		boolean exception = true;
@@ -153,6 +155,12 @@ public class Main {
     				try {
 	    				String num = input.nextToken();
 	    				int number = Integer.parseInt(num);
+	    				
+	    				if(input.hasMoreTokens()){
+	    					exception = true;
+	    				}
+	    				
+	    				
 	    				if(number > 1) {
 		    				for(int i = 0; i < number; i++) {
 		        				try{
@@ -187,11 +195,43 @@ public class Main {
     				try {
     					List<Critter> result = Critter.getInstances(creatureType);
     					Critter.runStats(result);
-    				}
+						Class myCritter = Class.forName("assignment4.Critter");
+						Method method = myCritter.getMethod("runStats", List.class);
+						method.invoke(null , result);
+						
+						} 
+    					catch (NoSuchMethodException e) {
+								// TODO Auto-generated catch block
+								exception = true;
+						} 
+    					catch (SecurityException e) {
+								// TODO Auto-generated catch block
+								exception = true;
+						}
+
+	    				
+						catch (ClassNotFoundException e) {
+							// TODO Auto-generated catch block
+							exception = true;
+						}
+    					
+    									
+    					catch (InvocationTargetException e) {
+    					// TODO Auto-generated catch block
+					    exception = true;
+    				
+    					}
+    				catch (IllegalAccessException e) {
+    					// TODO Auto-generated catch block
+					    exception = true;
+    				
+    					}
+    				
     				catch (InvalidCritterException e) {
     					exception = true;
     				}
     			}
+    			
     			else {
     				exception = true;
     			}
@@ -203,6 +243,9 @@ public class Main {
     		
     		if(exception == true) {
     			System.out.println("error processing: " + inputLine);
+    		}
+    		else {
+    			System.out.print("critters>");
     		}
         }
         
