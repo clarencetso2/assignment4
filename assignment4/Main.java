@@ -194,8 +194,7 @@ public class Main {
     			if(!input.hasMoreTokens()) {
     				try {
     					List<Critter> result = Critter.getInstances(creatureType);
-    					Critter.runStats(result);
-						Class myCritter = Class.forName("assignment4.Critter");
+						Class myCritter = Class.forName(myPackage + "." + creatureType);
 						Method method = myCritter.getMethod("runStats", List.class);
 						method.invoke(null , result);
 						
