@@ -76,18 +76,27 @@ public class Main {
         	System.out.print("critters>");
     		String inputLine = kb.nextLine();
     		StringTokenizer input = new StringTokenizer(inputLine);
+    		boolean exception = true;
+    		
+    		if(!input.hasMoreElements()) {
+    			System.out.println("invalid command: " + inputLine);
+    			continue;
+    		}
     		
     		String command = input.nextToken();
-    		int exceptionType = 1;
     		
     		for(int i = 0; i < 6; i++) {
     			if(command.equals(commands[i])) {
-    				exceptionType = 0;
-    				break;
+    				exception = false;
     			}
     		}
     		
-    		if(command.equals("quit") && input.hasMoreTokens() == false) {
+    		if(exception == true) {
+    			System.out.println("invalid command: " + inputLine);
+    			exception = false;
+    		}
+    		
+    		else if(command.equals("quit") && input.hasMoreTokens() == false) {
     			inputFlag = 0;
     		}
     		
@@ -100,59 +109,74 @@ public class Main {
     		}
     		
     		else if(command.equals("step") && input.hasMoreTokens() == true) {
-    			String num = input.nextToken();
-				int number = Integer.parseInt(num);
-    			if(input.hasMoreTokens() == false) {
-    				if(number > 1) {
-	    				for(int i = 0; i < number; i++) {
-	    					Critter.worldTimeStep();
+    			try {
+	    			String num = input.nextToken();
+					int number = Integer.parseInt(num);
+	    			if(input.hasMoreTokens() == false) {
+	    				if(number > 1) {
+		    				for(int i = 0; i < number; i++) {
+		    					Critter.worldTimeStep();
+		    				}
 	    				}
-    				}
-    				else {
-    					exceptionType = 2;
-    				}
+	    				else {
+	    					exception = true;
+	    				}
+	    			}
+	    			else {
+	    				exception = true;
+	    			}
     			}
-    			else {
-    				exceptionType = 2;
+    			catch (NumberFormatException e) {
+    				exception = true;
     			}
     		}
     		
     		else if(command.equals("seed") && input.hasMoreTokens() == true) {
-    			String num = input.nextToken();
-				int number = Integer.parseInt(num);
-    			if(input.hasMoreTokens() == false) {
-    				Critter.setSeed(number);
+    			try {
+	    			String num = input.nextToken();
+					int number = Integer.parseInt(num);
+	    			if(input.hasMoreTokens() == false) {
+	    				Critter.setSeed(number);
+	    			}
+	    			else {
+	    				exception = true;
+	    			}
     			}
-    			else {
-    				
+    			catch (NumberFormatException e) {
+    				exception = true;
     			}
     		}
     		
     		else if(command.equals("make") && input.hasMoreTokens() == true) {
     			String creatureType = input.nextToken();
     			if(input.hasMoreTokens()) {
-    				String num = input.nextToken();
-    				int number = Integer.parseInt(num);
-    				if(number > 1) {
-	    				for(int i = 0; i < number; i++) {
-	        				try{
-	        					Critter.makeCritter(creatureType);
-	        				}
-	        				catch (InvalidCritterException e) {
-	        					
-	        				}
+    				try {
+	    				String num = input.nextToken();
+	    				int number = Integer.parseInt(num);
+	    				if(number > 1) {
+		    				for(int i = 0; i < number; i++) {
+		        				try{
+		        					Critter.makeCritter(creatureType);
+		        				}
+		        				catch (InvalidCritterException e) {
+		        					exception = true;
+		        				}
+		    				}
+	    				}
+	    				else {
+	    					exception = true;
 	    				}
     				}
-    				else {
-    					exceptionType = 2;
-    				}
+        			catch (NumberFormatException e) {
+        				exception = true;
+        			}
     			}
     			else {
     				try{
     					Critter.makeCritter(creatureType);
     				}
     				catch (InvalidCritterException e) {
-    					
+    					exception = true;
     				}
     			}
     		}
@@ -165,22 +189,23 @@ public class Main {
     					Critter.runStats(result);
     				}
     				catch (InvalidCritterException e) {
-    					
+    					exception = true;
     				}
     			}
     			else {
-    				exceptionType = 2;
+    				exception = true;
     			}
     		}
     		
     		else {
-    			exceptionType = 2;
+    			exception = true;
+    		}
+    		
+    		if(exception == true) {
+    			System.out.println("error processing: " + inputLine);
     		}
         }
         
-        // System.out.println("GLHF");
-        
-        /* Write your code above */
         System.out.flush();
 
     }

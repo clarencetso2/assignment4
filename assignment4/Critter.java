@@ -2,14 +2,14 @@ package assignment4;
 /* CRITTERS Critter.java
  * EE422C Project 4 submission by
  * Replace <...> with your actual data.
- * <Student1 Name>
- * <Student1 EID>
- * <Student1 5-digit Unique No.>
- * <Student2 Name>
- * <Student2 EID>
- * <Student2 5-digit Unique No.>
+ * Clarence Tso
+ * ct26756
+ * 16230
+ * Garrett Willis
+ * ghw343
+ * 16230
  * Slip days used: <0>
- * Fall 2016
+ * Spring 2017
  */
 
 
@@ -64,14 +64,14 @@ public abstract class Critter {
 	protected final void walk(int direction) {
 		//if it hasnt moved and is doing timeStep
 		if(moved == false && timeStep == false){
-			moved = true;
 			executeMove(1,direction);
+			moved = true;
 		}
 		//if in fight and hasnt moved
 		else if(moved == false){
 			if(unOccupied(1,direction)){
-				moved = true;
 				executeMove(1,direction);
+				moved = true;
 			}
 			
 		}
@@ -89,15 +89,14 @@ public abstract class Critter {
 	protected final void run(int direction) {
 		//if it hasnt moved and is doing timeStep
 				if(moved == false && timeStep == false){
-					moved = true;
 					executeMove(2,direction);
-					
+					moved = true;
 				}
 				//if in fight and hasnt moved
 				else if(moved == false){
 					if(unOccupied(2,direction)){
-						moved = true;
 						executeMove(2,direction);
+						moved = true;
 					}
 					
 				}
@@ -221,8 +220,11 @@ public abstract class Critter {
 		Object instanceOfMyCritter = null;
 
 		try {
-			myCritter = Class.forName(critter_class_name); 	// Class object of specified name
+			myCritter = Class.forName(myPackage + "." + critter_class_name); 	// Class object of specified name
 		} catch (ClassNotFoundException e) {
+			throw new InvalidCritterException(critter_class_name);
+		}
+		catch (NoClassDefFoundError e) {
 			throw new InvalidCritterException(critter_class_name);
 		}
 		
@@ -272,7 +274,50 @@ public abstract class Critter {
 	 */
 	public static List<Critter> getInstances(String critter_class_name) throws InvalidCritterException {
 		List<Critter> result = new java.util.ArrayList<Critter>();
-	
+		Class<?> myCritter = null;
+		Constructor<?> constructor = null;
+		Object instanceOfMyCritter = null;
+		
+		try {
+			myCritter = Class.forName(myPackage + "." + critter_class_name); 	// Class object of specified name
+		} catch (ClassNotFoundException e) {
+			throw new InvalidCritterException(critter_class_name);
+		}
+		catch (NoClassDefFoundError e) {
+			throw new InvalidCritterException(critter_class_name);
+		}
+		
+		try {
+			constructor = myCritter.getConstructor();		// No-parameter constructor object
+			instanceOfMyCritter = constructor.newInstance();	// Create new object using constructor
+		} catch ( InstantiationException e) {
+			// Do whatever is needed to handle the various exceptions here -- e.g. rethrow Exception
+			throw new InvalidCritterException(critter_class_name);
+		} catch (NoSuchMethodException e) {
+			// TODO Auto-generated catch block
+			throw new InvalidCritterException(critter_class_name);
+
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			throw new InvalidCritterException(critter_class_name);
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			throw new InvalidCritterException(critter_class_name);
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			throw new InvalidCritterException(critter_class_name);
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			throw new InvalidCritterException(critter_class_name);
+		}
+		
+		Critter me = (Critter)instanceOfMyCritter;		// Cast to Critter
+		
+		for (Critter crit : population) {
+			if (me.getClass().isInstance(crit)) {
+				result.add(crit);
+			}
+		}
 		return result;
 	}
 	
@@ -387,6 +432,36 @@ public abstract class Critter {
 	
 	public static void displayWorld() {
 		// Complete this method.
+		
+		
+		for( Critter next:population ) {
+			critterGrid[next.y_coord][next.x_coord] = next;
+		}
+		
+		System.out.print("+");
+		for(int i = 0; i < Params.world_width; i++) {
+			System.out.print("-");
+		}
+		System.out.println("+");
+		
+		for(int i = 0; i < Params.world_height; i++) {
+			System.out.print("|");
+			for(int j = 0; j < Params.world_width; j++) {
+				if(critterGrid[i][j] != null) {
+					System.out.print(critterGrid[i][j].toString());
+				}
+				else {
+					System.out.print(" ");
+				}
+			}
+			System.out.println("|");
+		}
+		
+		System.out.print("+");
+		for(int i = 0; i < Params.world_width; i++) {
+			System.out.print("-");
+		}
+		System.out.println("+");
 	}
 	
 	
@@ -457,14 +532,12 @@ public abstract class Critter {
 	 */
 	private static void resolveEncounters(){
 		int diceA, diceB;
-		
 		Critter temp1, temp2;
-		
 		boolean fightAB, fightBA;
 		
-		//check for encounters on all critters in population ( all combination)
+		//check for encounters on all critters in population
 		for (int i = 0; i < population.size(); i++){
-			temp1 = population.get(i);
+			temp1=population.get(i);
 			temp1.timeStep = false;
 			
 			
@@ -488,22 +561,20 @@ public abstract class Critter {
 					continue;
 				}
 				
-				
-				//Initiate fight between critters
+				//check if want to fight
 				fightAB=temp1.fight(temp2.toString());
 				fightBA=temp2.fight(temp1.toString());
 				diceA = 0; diceB = 0;
 				
-				//check if at same location and both alive after they called fight
+				//check if at same location and both alive
 				if(temp1.getEnergy() > 0 && temp2.getEnergy() > 0 && sameLocation(temp1, temp2) == true){
-					
 					
 					if(fightAB){
 						diceA = getRandomInt(temp1.getEnergy());
 					}
 					
-					if(fightBA){
-						
+					if(fightBA)
+					{
 						diceB = getRandomInt(temp2.getEnergy());
 					}
 					
@@ -567,12 +638,5 @@ public abstract class Critter {
 		}
 		
 		return false;
-	}
-	
-	
-	
-	
-	
-	
-		
+	}	
 }
